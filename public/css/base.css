@@ -35,6 +35,7 @@ dialog {
   max-height: 88vh;
   display: flex; flex-direction: column;
 }
+dialog:not([open]) { display: none; } /* display:flex перебивает скрытие закрытых диалогов */
 dialog::backdrop { background: rgba(15, 23, 42, .45); }
 .dlg-body { flex: 1; min-height: 0; overflow: auto; padding: 16px 20px; }
 .dlg-foot {

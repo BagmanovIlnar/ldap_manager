@@ -28,8 +28,11 @@ const rclickMenu = async (page, dn, item) => until(async () => await page.evalua
   const errors = [];
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
   await page.goto('http://localhost:8080/', { waitUntil: 'networkidle' });
-  await step('1', 'неавторизован → адрес #/login, форма видна', () => until(async () => await page.evaluate(() =>
-    location.hash === '#/login' && !document.getElementById('login').hidden && document.getElementById('app').hidden)));
+  await step('1', 'неавторизован → адрес #/login, форма видна, закрытые диалоги скрыты', () => until(async () => await page.evaluate(() => {
+    const vis = (id) => getComputedStyle(document.getElementById(id)).display !== 'none';
+    return location.hash === '#/login' && !document.getElementById('login').hidden &&
+      document.getElementById('app').hidden && !vis('dlg-entry') && !vis('dlg-create') && !vis('dlg-password');
+  })));
 
   // 2. вход → #/, грид
   await page.locator('wc-login').locator('input[name="dn"]').fill('cn=admin,dc=example,dc=org');

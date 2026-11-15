@@ -50,7 +50,13 @@ dialog input {
 .pw-status { font-size: 13px; color: var(--muted); }
 .pw-status.ok { color: var(--ok); }
 .pw-status.bad { color: var(--danger); }
-.dlg-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.dlg-head {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; align-items: center; justify-content: space-between;
+  margin: -18px -20px 12px; padding: 12px 20px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
 .dlg-head b { font-size: 15px; }
 .dlg-x {
   border: 0; background: none; cursor: pointer; font-size: 18px; line-height: 1;

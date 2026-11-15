@@ -89,11 +89,13 @@ let page;
     return await until(() => !members().includes(VASYA));
   })());
 
-  await step('6', 'не-группа → панель скрыта', () => (async () => {
+  await step('6', 'не-группа → панель скрыта, memberOf-панель скрыта', () => (async () => {
     await page.keyboard.press('Escape'); // закрыть модалку группы
     await rclickEdit(PETYA);
     return await until(async () => await page.evaluate(() =>
-      document.getElementById('dlg-entry').open && document.getElementById('group').hidden));
+      document.getElementById('dlg-entry').open &&
+      document.getElementById('group').hidden &&
+      document.getElementById('memberof').hidden));
     if (!ok6) {
       console.log('   [dbg6]', await page.evaluate(() => JSON.stringify({
         dlgOpen: document.getElementById('dlg-entry').open,
@@ -106,7 +108,21 @@ let page;
     return ok6;
   })());
 
-  console.log('7. JS-ошибки:', errors.length ? errors : 'нет');
+  await step('7', 'AD-группа (objectClass=group) против OpenLDAP → отказ сервера (21/65)', () => {
+    const r = api('POST', '/api/entry', { dn: 'cn=adgrp,' + OU, attrs: { objectClass: ['group'], cn: ['adgrp'] } });
+    api('DELETE', `/api/entry?dn=${enc('cn=adgrp,' + OU)}`);
+    return /LDAP (21|65):/.test(r); // 21 = invalidAttributeSyntax, 65 = objectClassViolation
+  });
+
+  await step('8', 'форма создания на OpenLDAP — пресетов AD нет', () => until(async () => {
+    await page.evaluate(() => { location.hash = '#/create'; });
+    if (!(await until(async () => await page.evaluate(() => document.getElementById('dlg-create').open)))) return false;
+    return await page.evaluate(() =>
+      ![...document.getElementById('centry').shadowRoot.querySelectorAll('button')]
+        .some((b) => b.textContent.includes('AD-группа')));
+  }));
+
+  console.log('9. JS-ошибки:', errors.length ? errors : 'нет');
   for (const dn of [GROUP, VASYA, PETYA, OU]) api('DELETE', `/api/entry?dn=${enc(dn)}`);
   await browser.close();
   process.exit(0);

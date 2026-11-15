@@ -1,23 +1,14 @@
-# dev: тестовый LDAP + приложение. `docker compose up --build`
-# ui: http://localhost:8080 • swagger: http://localhost:8080/swagger-ui
-# bind DN: cn=admin,dc=example,dc=org • пароль: adminpassword
+# Прод: только веб-менеджер. Каталог (LDAP/AD) подключается снаружи через env.
+# UI: http://localhost:8080 • swagger: http://localhost:8080/swagger-ui
+#
+# Для локальной разработки/e2e (тестовый OpenLDAP + приложение):
+#   docker compose -f docker-compose.dev.yml up -d --build
 services:
-  ldap:
-    image: osixia/openldap:latest
-    environment:
-      LDAP_ORGANISATION: Example
-      LDAP_DOMAIN: example.org
-      LDAP_ADMIN_PASSWORD: adminpassword
-    ports:
-      - "1389:389"
-
   app:
     build: .
     environment:
-      LDAP_URL: ldap://ldap:389
-      LDAP_BASE_DN: dc=example,dc=org
+      LDAP_URL: ${LDAP_URL:?укажите LDAP_URL, напр. ldap://samba_addc:389}
+      LDAP_BASE_DN: ${LDAP_BASE_DN:?укажите LDAP_BASE_DN, напр. DC=home,DC=arpa}
       BIND_ADDR: 0.0.0.0:8080
     ports:
       - "8080:8080"
-    depends_on:
-      - ldap

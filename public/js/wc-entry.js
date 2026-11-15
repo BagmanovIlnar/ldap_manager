@@ -123,6 +123,36 @@ class WcEntry extends HTMLElement {
     $('ndn').value = parentDn ? ',' + parentDn : '';
     $('ndn').focus();
     $('ndn').setSelectionRange(0, 0);
+    this._adPresets();
+  }
+
+  // пресеты AD-групп: только на каталоге с AD-схемой (rootDSE vendorName);
+  // на OpenLDAP vendorName не совпадёт → кнопок не будет
+  async _adPresets() {
+    let vendor = '';
+    try {
+      const rs = await api('/api/search?base=&scope=base&attrs=vendorName');
+      vendor = (rs[0]?.attrs?.vendorName || []).join(' ');
+    } catch { return; }
+    if (!/samba|microsoft|active directory/i.test(vendor)) return;
+    const $ = (id) => this.shadowRoot.getElementById(id);
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    for (const [title, groupType] of [['+ AD-группа (security)', '-2147483646'], ['+ AD-группа (рассылка)', '2']]) {
+      const b = document.createElement('button');
+      b.textContent = title;
+      b.onclick = () => {
+        $('oc').value = 'group';
+        const rows = $('attrRows');
+        rows.innerHTML = '';
+        rows.append(this._ablock('cn', ['']));
+        rows.append(this._ablock('groupType', [groupType]));
+        $('ndn').placeholder = 'cn=имя-группы,ou=…';
+        $('ndn').focus();
+      };
+      bar.append(b);
+    }
+    $('oc').closest('label').after(bar);
   }
 
   // ---------- редактор атрибутов ----------

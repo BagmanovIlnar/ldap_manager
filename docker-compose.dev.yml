@@ -1,0 +1,23 @@
+# dev/e2e: тестовый OpenLDAP + приложение. Основной compose его не использует.
+# ui: http://localhost:8080 • swagger: http://localhost:8080/swagger-ui
+# bind DN: cn=admin,dc=example,dc=org • пароль: adminpassword
+services:
+  ldap:
+    image: osixia/openldap:latest
+    environment:
+      LDAP_ORGANISATION: Example
+      LDAP_DOMAIN: example.org
+      LDAP_ADMIN_PASSWORD: adminpassword
+    ports:
+      - "1389:389"
+
+  app:
+    build: .
+    environment:
+      LDAP_URL: ldap://ldap:389
+      LDAP_BASE_DN: dc=example,dc=org
+      BIND_ADDR: 0.0.0.0:8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - ldap

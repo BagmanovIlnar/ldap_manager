@@ -1,14 +1,15 @@
 import { api, getCreds, setCreds } from './api.js?v=4';
 import './wc-login.js?v=4';
 import './wc-grid.js?v=4';
-import './wc-entry.js?v=4';
-import './wc-group.js?v=4';
+import './wc-entry.js?v=5';
+import './wc-group.js?v=6';
+import './wc-memberof.js?v=5';
 
 const $ = (id) => document.getElementById(id);
 const login = $('login'), main = $('app'), who = $('who'),
       grid = $('grid'), dlgEntry = $('dlg-entry'), dlgCreate = $('dlg-create'),
       dlgPassword = $('dlg-password'),
-      entry = $('entry'), group = $('group'), centry = $('centry');
+      entry = $('entry'), group = $('group'), memberof = $('memberof'), centry = $('centry');
 
 let me = null;        // WhoAmI после успешного входа
 let gridInit = false; // грид получает base_dn один раз
@@ -47,6 +48,7 @@ function applyRoute() {
     if (entry._dn !== dn) {
       entry.dn = dn;
       group.currentDn = dn;
+      memberof.currentDn = dn;
     }
     if (!dlgEntry.open) dlgEntry.showModal();
     return;
@@ -189,6 +191,7 @@ document.addEventListener('wc-changed', (e) => {
   if (e.detail?.op === 'delete') {
     entry.clear();
     group.currentDn = null;
+    memberof.currentDn = null;
     if (dlgEntry.open) dlgEntry.close();
     history.replaceState(null, '', '#/');
   }

@@ -1,8 +1,19 @@
 import { api } from './api.js?v=4';
 
-// управление составом группы (groupOfNames/groupOfUniqueNames → member,
-// posixGroup → memberUid). Панель показывается, если выбранная запись — группа.
-const GROUP_CLASSES = ['groupofnames', 'groupofuniquenames', 'posixgroup'];
+// управление составом группы (groupOfNames/groupOfUniqueNames → member/uniqueMember,
+// posixGroup → memberUid, AD `group` → member + тип из groupType).
+// Панель показывается, если выбранная запись — группа.
+const GROUP_CLASSES = ['groupofnames', 'groupofuniquenames', 'posixgroup', 'group'];
+
+// groupType (AD): битовая маска. 0x80000000 = security, иначе distribution;
+// 0x2 = global, 0x4 = domain local, 0x8 = universal
+function adGroupType(raw) {
+  const t = Number(raw || 0) >>> 0;
+  if (!t) return '';
+  const kind = t & 0x80000000 ? 'security' : 'distribution';
+  const scope = t & 0x8 ? 'universal' : t & 0x4 ? 'domain local' : 'global';
+  return kind + ' · ' + scope;
+}
 
 class WcGroup extends HTMLElement {
   constructor() {
@@ -48,9 +59,9 @@ class WcGroup extends HTMLElement {
       const classes = (e.attrs.objectClass || []).map((c) => c.toLowerCase());
       const cls = GROUP_CLASSES.find((c) => classes.includes(c));
       if (!cls) { body.innerHTML = ''; this.hidden = true; return; }
-      const attr = cls === 'posixGroup' ? 'memberUid' : 'member';
+      const attr = cls === 'posixGroup' ? 'memberUid' : cls === 'groupOfUniqueNames' ? 'uniqueMember' : 'member';
       this.hidden = false;
-      this._render(attr, e.attrs[attr] || []);
+      this._render(attr, e.attrs[attr] || [], cls === 'group' ? adGroupType(e.attrs.groupType?.[0]) : '');
     } catch {
       if (gen !== this._gen) return;
       body.innerHTML = '';
@@ -58,11 +69,11 @@ class WcGroup extends HTMLElement {
     }
   }
 
-  _render(attr, members) {
+  _render(attr, members, badge) {
     const body = this.shadowRoot.getElementById('body');
     body.innerHTML = '';
     const h = document.createElement('h3');
-    h.textContent = '👥 Участники (' + attr + ')';
+    h.textContent = '👥 Участники (' + attr + ')' + (badge ? ' — ' + badge : '');
     body.append(h);
 
     if (!members.length) {

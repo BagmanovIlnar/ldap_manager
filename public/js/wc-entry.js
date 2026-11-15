@@ -10,7 +10,7 @@ class WcEntry extends HTMLElement {
     this._orig = {};
     this.attachShadow({ mode: 'open' }).innerHTML = `
       <style>
-        :host { display: block; padding: 16px; }
+        :host { display: block; }
         h2 { margin: 0 0 12px; font-size: 15px; word-break: break-all; }
         label { display: grid; gap: 4px; margin-bottom: 10px; color: var(--muted, #6b7686); font-size: 13px; }
         input {
@@ -100,16 +100,6 @@ class WcEntry extends HTMLElement {
     addbar.append(add);
     body.append(addbar);
 
-    const bar = document.createElement('div');
-    bar.className = 'bar';
-    const save = document.createElement('button');
-    save.className = 'primary';
-    save.textContent = '💾 Сохранить';
-    const status = document.createElement('span');
-    status.className = 'status';
-    save.onclick = () => this._saveEdit(status);
-    bar.append(save, status);
-    body.append(bar);
   }
 
   _renderCreate(parentDn) {
@@ -120,15 +110,13 @@ class WcEntry extends HTMLElement {
       <div class="sect">АТРИБУТЫ</div>
       <div class="ablocks" id="attrRows"></div>
       <div class="bar"><button id="addAttr">+ атрибут</button></div>
-      <label>Пароль (userPassword, опционально)<input id="pw" type="password" autocomplete="new-password"></label>
-      <div class="bar"><button id="create" class="primary">Создать</button><span id="cstatus" class="status"></span></div>`;
+      <label>Пароль (userPassword, опционально)<input id="pw" type="password" autocomplete="new-password"></label>`;
     const $ = (id) => this.shadowRoot.getElementById(id);
     this.shadowRoot.querySelector('#attrRows').append(this._ablock('', ['']));
     $('addAttr').onclick = () => this.shadowRoot.getElementById('attrRows').append(this._ablock('', ['']));
     $('ndn').value = parentDn ? ',' + parentDn : '';
     $('ndn').focus();
     $('ndn').setSelectionRange(0, 0);
-    $('create').onclick = () => this._create();
   }
 
   // ---------- редактор атрибутов ----------
@@ -180,9 +168,9 @@ class WcEntry extends HTMLElement {
 
   // ---------- сохранение ----------
 
-  // edit: diff против исходных атрибутов → PATCH
-  async _saveEdit(status) {
-    status.className = 'status';
+  // edit: diff против исходных атрибутов → PATCH. resolve: {saved, message}
+  async save() {
+    if (this._mode !== 'edit' || !this._dn) throw new Error('запись не выбрана');
     const current = new Map();
     for (const b of this.shadowRoot.querySelectorAll('.ablock')) {
       const k = b.querySelector('.ak').value.trim();
@@ -203,37 +191,22 @@ class WcEntry extends HTMLElement {
     for (const k of Object.keys(this._orig)) {
       if (!current.has(k)) ops.push({ op: 'replace', attr: k, values: [] });
     }
-    if (!ops.length) {
-      status.textContent = 'нет изменений';
-      return;
-    }
-    try {
-      await api('/api/entry', { method: 'PATCH', body: JSON.stringify({ dn: this._dn, ops }) });
-      status.className = 'status ok';
-      status.textContent = '✓ сохранено';
-      this.dispatchEvent(new CustomEvent('wc-changed', {
-        detail: { dn: this._dn, op: 'save' }, bubbles: true, composed: true,
-      }));
-      this.load();
-    } catch (ex) {
-      status.className = 'status bad';
-      status.textContent = '✖ ' + ex.message;
-    }
+    if (!ops.length) return { saved: false, message: 'нет изменений' };
+    await api('/api/entry', { method: 'PATCH', body: JSON.stringify({ dn: this._dn, ops }) });
+    this.dispatchEvent(new CustomEvent('wc-changed', {
+      detail: { dn: this._dn, op: 'save' }, bubbles: true, composed: true,
+    }));
+    this.load();
+    return { saved: true, message: '✓ сохранено' };
   }
 
-  // create: сборка attrs → POST
-  async _create() {
+  // create: сборка attrs → POST. resolve: созданный dn, reject: текст ошибки
+  async create() {
+    if (this._mode !== 'create') throw new Error('форма создания не открыта');
     const $ = (id) => this.shadowRoot.getElementById(id);
-    const st = $('cstatus');
-    st.className = 'status';
-    st.textContent = '';
     const dn = $('ndn').value.trim();
     const oc = $('oc').value.split(',').map((s) => s.trim()).filter(Boolean);
-    if (!dn || !oc.length) {
-      st.className = 'status bad';
-      st.textContent = '✖ нужны DN и objectClass';
-      return;
-    }
+    if (!dn || !oc.length) throw new Error('нужны DN и objectClass');
     const attrs = { objectClass: oc };
     for (const b of this.shadowRoot.querySelectorAll('.ablock')) {
       const k = b.querySelector('.ak').value.trim();
@@ -243,17 +216,11 @@ class WcEntry extends HTMLElement {
     }
     const pw = $('pw').value;
     if (pw) attrs.userPassword = [pw];
-    try {
-      await api('/api/entry', { method: 'POST', body: JSON.stringify({ dn, attrs }) });
-      st.className = 'status ok';
-      st.textContent = '✓ создано';
-      this.dispatchEvent(new CustomEvent('wc-changed', {
-        detail: { dn, op: 'create' }, bubbles: true, composed: true,
-      }));
-    } catch (ex) {
-      st.className = 'status bad';
-      st.textContent = '✖ ' + ex.message;
-    }
+    await api('/api/entry', { method: 'POST', body: JSON.stringify({ dn, attrs }) });
+    this.dispatchEvent(new CustomEvent('wc-changed', {
+      detail: { dn, op: 'create' }, bubbles: true, composed: true,
+    }));
+    return dn;
   }
 }
 

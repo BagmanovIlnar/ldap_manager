@@ -33,6 +33,7 @@ const step = async (n, desc, fn) => { const ok = await fn(); console.log(`${n}. 
     const tr = [...document.getElementById('grid').shadowRoot.querySelectorAll('tr')]
       .find(t => t.dataset.dn === dn);
     if (!tr) return null;
+    tr.scrollIntoView({ block: 'center' }); // строка в видимости для реального клика
     const r = tr.getBoundingClientRect();
     return { x: r.x + 100, y: r.y + r.height / 2 };
   }, dn);
@@ -59,7 +60,7 @@ const step = async (n, desc, fn) => { const ok = await fn(); console.log(`${n}. 
       f.getElementById('oc').value = 'organizationalUnit';
       f.querySelector('.ablock .ak').value = 'ou';
       f.querySelector('.ablock .av').value = 'real';
-      f.getElementById('create').click();
+      document.getElementById('create').click();
     });
     return await until(() => {
       try { return JSON.parse(api('GET', `/api/entry?dn=${enc('ou=real,dc=example,dc=org')}`)).attrs.ou[0] === 'real'; } catch { return false; }
@@ -94,11 +95,15 @@ const step = async (n, desc, fn) => { const ok = await fn(); console.log(`${n}. 
       const g = document.getElementById('grid').shadowRoot;
       [...g.querySelectorAll('tr')].find(t => t.dataset.dn === 'dc=example,dc=org').querySelector('.caret').click();
     });
+    await page.waitForTimeout(300);
+    console.log('   [dbg7] rows после collapse:', await page.evaluate(() =>
+      [...document.getElementById('grid').shadowRoot.querySelectorAll('tr')].map(t => `${t.dataset.dn}(d${t.dataset.depth})`)));
     const collapsed = await until(async () => !(await rowBox('ou=real,dc=example,dc=org')));
     const plus = await page.evaluate(() => {
       const g = document.getElementById('grid').shadowRoot;
       return [...g.querySelectorAll('tr')].find(t => t.dataset.dn === 'dc=example,dc=org')?.querySelector('.caret')?.textContent;
     });
+    console.log('   [dbg7] collapsed:', collapsed, 'plus:', plus);
     await page.evaluate(() => {
       const g = document.getElementById('grid').shadowRoot;
       [...g.querySelectorAll('tr')].find(t => t.dataset.dn === 'dc=example,dc=org').querySelector('.caret').click();
@@ -164,7 +169,7 @@ const step = async (n, desc, fn) => { const ok = await fn(); console.log(`${n}. 
       rows[2].querySelector('.ak').value = 'mail';
       rows[2].querySelector('.av').value = 'bob@example.org';
       f.getElementById('pw').value = 'BobPass123';
-      f.getElementById('create').click();
+      document.getElementById('create').click();
     });
     return await until(() => {
       try {

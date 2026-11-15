@@ -21,18 +21,32 @@
   </main>
   <dialog id="dlg-entry">
     <div class="dlg-head"><b>Запись</b><button class="dlg-x" title="Закрыть (Esc)">✕</button></div>
-    <wc-entry id="entry"></wc-entry>
-    <wc-group id="group"></wc-group>
+    <div class="dlg-body">
+      <wc-entry id="entry"></wc-entry>
+      <wc-group id="group"></wc-group>
+    </div>
+    <div class="dlg-foot">
+      <button id="entry-save" class="pw-save">💾 Сохранить</button>
+      <span id="entry-status" class="pw-status"></span>
+    </div>
   </dialog>
   <dialog id="dlg-create">
     <div class="dlg-head"><b>Новая запись</b><button class="dlg-x" title="Закрыть (Esc)">✕</button></div>
-    <wc-entry id="centry"></wc-entry>
+    <div class="dlg-body">
+      <wc-entry id="centry"></wc-entry>
+    </div>
+    <div class="dlg-foot">
+      <button id="create" class="pw-save">Создать</button>
+      <span id="cstatus" class="pw-status"></span>
+    </div>
   </dialog>
   <dialog id="dlg-password">
     <div class="dlg-head"><b>Изменить пароль</b><button class="dlg-x" title="Закрыть (Esc)">✕</button></div>
-    <p id="pw-dn" class="pw-dn"></p>
-    <label>Новый пароль<input id="newpw" type="password" autocomplete="new-password"></label>
-    <div class="pw-row">
+    <div class="dlg-body">
+      <p id="pw-dn" class="pw-dn"></p>
+      <label>Новый пароль<input id="newpw" type="password" autocomplete="new-password"></label>
+    </div>
+    <div class="dlg-foot">
       <button id="pw-save" class="pw-save">Сохранить</button>
       <span id="pw-status" class="pw-status"></span>
     </div>

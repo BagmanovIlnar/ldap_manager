@@ -140,6 +140,32 @@ grid.addEventListener('wc-password', (e) => {
   location.hash = '#/password?dn=' + encodeURIComponent(e.detail.dn);
 });
 
+$('entry-save').onclick = async () => {
+  const st = $('entry-status');
+  st.className = 'pw-status';
+  try {
+    const r = await entry.save();
+    st.className = 'pw-status ok';
+    st.textContent = r.message;
+  } catch (ex) {
+    st.className = 'pw-status bad';
+    st.textContent = '✖ ' + ex.message;
+  }
+};
+
+$('create').onclick = async () => {
+  const st = $('cstatus');
+  st.className = 'pw-status';
+  try {
+    await centry.create();
+    st.className = 'pw-status ok';
+    st.textContent = '✓ создано';
+  } catch (ex) {
+    st.className = 'pw-status bad';
+    st.textContent = '✖ ' + ex.message;
+  }
+};
+
 $('pw-save').onclick = async () => {
   const st = $('pw-status');
   try {

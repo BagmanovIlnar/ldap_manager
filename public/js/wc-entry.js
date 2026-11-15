@@ -8,6 +8,7 @@ class WcEntry extends HTMLElement {
     this._mode = null; // 'create' | 'edit' | null
     this._dn = null;
     this._orig = {};
+    this._gen = 0; // счётчик load(): устаревшие ответы отбрасываются
     this.attachShadow({ mode: 'open' }).innerHTML = `
       <style>
         :host { display: block; }
@@ -52,6 +53,7 @@ class WcEntry extends HTMLElement {
   }
 
   clear() {
+    this._gen++; // отменить находящийся в полёте load()
     this._mode = null;
     this._dn = null;
     this.shadowRoot.getElementById('body').innerHTML = '<p class="hint">Запись не выбрана</p>';
@@ -59,6 +61,7 @@ class WcEntry extends HTMLElement {
 
   // создание: DN с запятой — дописать RDN слева
   openCreate(parentDn) {
+    this._gen++; // отменить находящийся в полёте load()
     this._mode = 'create';
     this._dn = null;
     this._orig = {};
@@ -68,14 +71,17 @@ class WcEntry extends HTMLElement {
   // ---------- загрузка/рендер ----------
 
   async load() {
+    const gen = ++this._gen;
     const body = this.shadowRoot.getElementById('body');
     if (this._mode !== 'edit' || !this._dn) return this.clear();
     body.innerHTML = '<p class="hint">Загрузка…</p>';
     try {
       const e = await api('/api/entry?dn=' + encodeURIComponent(this._dn));
+      if (gen !== this._gen) return; // пришёл ответ на устаревший запрос
       this._orig = e.attrs;
       this._renderEdit(e);
     } catch (ex) {
+      if (gen !== this._gen) return;
       body.innerHTML = `<p class="err">⚠ ${ex.message}</p>`;
     }
   }

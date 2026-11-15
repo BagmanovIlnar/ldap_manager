@@ -8,6 +8,7 @@ class WcGroup extends HTMLElement {
   constructor() {
     super();
     this._dn = null;
+    this._gen = 0; // счётчик load(): устаревшие ответы отбрасываются
     this.attachShadow({ mode: 'open' }).innerHTML = `
       <style>
         :host { display: block; padding: 16px; background: var(--panel, #fff); border: 1px solid var(--border, #d8dee6); border-radius: 8px; }
@@ -38,10 +39,12 @@ class WcGroup extends HTMLElement {
   }
 
   async load() {
+    const gen = ++this._gen;
     const body = this.shadowRoot.getElementById('body');
     if (!this._dn) { body.innerHTML = ''; this.hidden = true; return; }
     try {
       const e = await api('/api/entry?dn=' + encodeURIComponent(this._dn));
+      if (gen !== this._gen) return; // пришёл ответ на устаревший запрос
       const classes = (e.attrs.objectClass || []).map((c) => c.toLowerCase());
       const cls = GROUP_CLASSES.find((c) => classes.includes(c));
       if (!cls) { body.innerHTML = ''; this.hidden = true; return; }
@@ -49,6 +52,7 @@ class WcGroup extends HTMLElement {
       this.hidden = false;
       this._render(attr, e.attrs[attr] || []);
     } catch {
+      if (gen !== this._gen) return;
       body.innerHTML = '';
       this.hidden = true;
     }

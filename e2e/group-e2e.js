@@ -40,6 +40,7 @@ let page;
   page = await browser.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
+  page.on('console', m => console.log('  ', m.text()));
   page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
 
   await page.goto('http://localhost:8080', { waitUntil: 'networkidle' });
@@ -93,6 +94,16 @@ let page;
     await rclickEdit(PETYA);
     return await until(async () => await page.evaluate(() =>
       document.getElementById('dlg-entry').open && document.getElementById('group').hidden));
+    if (!ok6) {
+      console.log('   [dbg6]', await page.evaluate(() => JSON.stringify({
+        dlgOpen: document.getElementById('dlg-entry').open,
+        hidden: document.getElementById('group').hidden,
+        dn: document.getElementById('group')._dn,
+        body: (document.getElementById('group').shadowRoot.getElementById('body')?.innerHTML || '').slice(0, 120),
+        hash: location.hash,
+      })));
+    }
+    return ok6;
   })());
 
   console.log('7. JS-ошибки:', errors.length ? errors : 'нет');

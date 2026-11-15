@@ -74,7 +74,7 @@ function applyRoute() {
 [dlgEntry, dlgCreate, dlgPassword].forEach((d) => d.addEventListener('close', () => {
   const h = location.hash;
   if (h.startsWith('#/dn=') || h.startsWith('#/create') || h.startsWith('#/password')) {
-    location.replace('#/');
+    history.replaceState(null, '', '#/'); // без location.replace: он создаёт отложенную навигацию → гонки
   }
 }));
 
@@ -190,7 +190,7 @@ document.addEventListener('wc-changed', (e) => {
     entry.clear();
     group.currentDn = null;
     if (dlgEntry.open) dlgEntry.close();
-    location.replace('#/');
+    history.replaceState(null, '', '#/');
   }
 });
 

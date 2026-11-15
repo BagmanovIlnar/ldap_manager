@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LDAP Manager</title>
+  <link rel="stylesheet" href="css/base.css?v=4">
+  <script type="module" src="js/app.js?v=4"></script>
+</head>
+<body>
+  <wc-login id="login"></wc-login>
+  <main id="app" hidden>
+    <header>
+      <h1>LDAP Manager</h1>
+      <span id="who" title=""></span>
+      <button id="logout">Выйти</button>
+    </header>
+    <div class="layout">
+      <wc-grid id="grid"></wc-grid>
+    </div>
+  </main>
+  <dialog id="dlg-entry">
+    <div class="dlg-head"><b>Запись</b><button class="dlg-x" title="Закрыть (Esc)">✕</button></div>
+    <wc-entry id="entry"></wc-entry>
+    <wc-group id="group"></wc-group>
+  </dialog>
+  <dialog id="dlg-create">
+    <div class="dlg-head"><b>Новая запись</b><button class="dlg-x" title="Закрыть (Esc)">✕</button></div>
+    <wc-entry id="centry"></wc-entry>
+  </dialog>
+  <dialog id="dlg-password">
+    <div class="dlg-head"><b>Изменить пароль</b><button class="dlg-x" title="Закрыть (Esc)">✕</button></div>
+    <p id="pw-dn" class="pw-dn"></p>
+    <label>Новый пароль<input id="newpw" type="password" autocomplete="new-password"></label>
+    <div class="pw-row">
+      <button id="pw-save" class="pw-save">Сохранить</button>
+      <span id="pw-status" class="pw-status"></span>
+    </div>
+  </dialog>
+</body>
+</html>
